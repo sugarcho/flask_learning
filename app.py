@@ -1,11 +1,39 @@
-#Jinja2 模板引擎 網頁模版 - Html 回傳
+### Python Flask - Hello World basic ###
+from flask import Flask
+import os
 
-from flask import Flask, render_template
 app = Flask(__name__)
+
+@app.route("/")
+@app.route("/hello")
+
+def hello():
+    return "Hi world"
+
+@app.route("/data/appInfo/<name>", methods=["GET"])
+def queryDataMessageByName(name):
+    print("type(name):", type(name))
+    return f"string: {name}"
+
+@app.route("/data/appInfo/id/<int:id>", methods=["GET"])
+def queryDataMessageById(id):
+    print("type(id):", type(id))
+    return f"int: {id}"
+
+@app.route("/data/appInfo/version/<float:version>", methods=["GET"])
+def queryDataMessageByVersion(version):
+    print("type(version): ", type(version))
+    return f"float: {version}"
 
 @app.route('/text')
 def text():
-    return '<html><body><h1>Hello World!!</h1></body></html>'
+    return '<html><body><h1>Hello World</h1></body></html>'
+
+
+### Jinja2 模板引擎, 網頁模版 - Html 回傳 ###
+
+from flask import Flask, render_template
+# app = Flask(__name__)
 
 @app.route('/home')
 def home():
@@ -42,9 +70,8 @@ def staticPage():
     return render_template('static.html')
 
 
-## form way
+### form way, 資料交換 - Form 表單提交 ###
 from flask import Flask, request, render_template, redirect, url_for
-
 # app = Flask(__name__)
 
 @app.route('/form')
@@ -66,7 +93,73 @@ def submit():
 def success(name, action):
     return f'{action} : Welcome {name} ~!!!'
 
+### jQuery - Ajax 資料交換 ###
+from flask import Flask, render_template, request, jsonify, json
+# app = Flask(__name__)
+
+@app.route('/data')
+def webapi():
+    return render_template('data.html')
+
+@app.route('/data/message', methods=['GET'])
+def getDataMessage():
+    if request.method == 'GET':
+        with open('static/data/message.json','r') as f:
+            data = json.load(f)
+            print('text: ', data)
+        f.close
+        return jsonify(data)
+
+@app.route('/data/message', methods=['POST'])
+def setDataMessage():
+    if request.method == 'POST':
+        data = {
+            'appInfo': {
+                'id': request.form['app_id'],
+                'name': request.form['app_name'],
+                'version': request.form['app_version'],
+                'author': request.form['app_author'],
+                'remark': request.form['app_remark']
+            }
+        }
+        print(type(data))
+        with open('static/data/input.json', 'w') as f:
+            json.dump(data, f)
+        f.close
+        return jsonify(result='OK')
+    
+### upload file 
+    
+# 設定上傳文件的最大為16MB
+app.config['MAX_CONTENT_LENGTH'] = 16*1024*1024
+
+# 定義上傳資料夾的位址
+UPLOAD_FOLDER = os.path .join(os.getcwd(), 'uploads')
+
+# 路由定義 - 上傳頁面
+@app.route('/upload')
+def uploadPage():
+    return render_template('upload.html')
+
+@app.route('/upload/submit', methods=['POST'])
+def upload():
+    if 'file' not in request.files:
+        return 'No file.'
+
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file.'
+    
+    if file:
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+        return 'File uploaded sueecssfully.'
+
+
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
